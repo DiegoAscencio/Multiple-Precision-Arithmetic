@@ -2,6 +2,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <stdint.h> // for uint64_t
+
+#define uint128_t __uint128_t
 
 struct BigInt
 {
@@ -23,6 +26,7 @@ BigInt sumBigInt(BigInt x, BigInt y);
 BigInt resBigInt(BigInt x, BigInt y);
 BigIntMul mulBigInt(BigInt x, BigInt y);
 
+BigInt enterN256(char a0[], char a1[], char a2[], char a3[], int sign);
 unsigned long long hexaToULL(char number[]);
 
 int main(int argc, char *argv[])
@@ -30,17 +34,8 @@ int main(int argc, char *argv[])
     printf("Inicio del programa\n\n");
     struct BigInt x, y;
 
-    x.number[0] = hexaToULL("0xFFFFFFFFFFFFFFFF");
-    x.number[1] = hexaToULL("0xFFFFFFFFFFFFFFFF");
-    x.number[2] = hexaToULL("0xFFFFFFFFFFFFFFFF");
-    x.number[3] = hexaToULL("0xFFFFFFFFFFFFFFFF");
-    x.sign = 0;
-
-    y.number[0] = hexaToULL("1ABBB0");
-    y.number[1] = hexaToULL("0");
-    y.number[2] = hexaToULL("0xFFFFFFFFFFFFFFFF");
-    y.number[3] = hexaToULL("0xFFFFFFFFFFFFFFFF");
-    y.sign = 0;
+    x = enterN256("0x0", "0x0", "0x0", "0xFFFFFFFFFFFFFFFF", 0);
+    y = enterN256("0x0", "0x0", "0x0", "0x10", 0);
 
     printf("    X = ");
     printBigInt(x.number, 4, x.sign);
@@ -59,6 +54,17 @@ int main(int argc, char *argv[])
     printBigInt(rMul.number, 8, rMul.sign);
 
     printf("\nFin del programa\n");
+}
+BigInt enterN256(char a0[], char a1[], char a2[], char a3[], int sign)
+{
+    struct BigInt n256;
+    n256.number[3] = hexaToULL(a0);
+    n256.number[2] = hexaToULL(a1);
+    n256.number[1] = hexaToULL(a2);
+    n256.number[0] = hexaToULL(a3);
+    n256.sign = sign;
+
+    return n256;
 }
 
 unsigned long long hexaToULL(char hexa[])
@@ -91,7 +97,7 @@ void printBigInt(unsigned long long number[], int len, int s)
     //printf("%c0x", sign);
     printf("0x");
 
-    for (i = 0; i < len; i++)
+    for (i = len - 1; i >= 0; i--)
     {
         printf("%016llx ", number[i]);
     }
@@ -171,16 +177,30 @@ BigIntMul mulBigInt(BigInt x, BigInt y)
     out.sign = 0;
 
     int i, j = 0;
-    unsigned long long s = 0;
+    uint128_t s = 0;
 
     for (i = 0; i < 4; i++)
     {
         unsigned long long c = 0;
         for (j = 0; j < 4; j++)
         {
+            printf("i: %d j:%d x: %llx j: %llx\n", i, j, x.number[j], y.number[i]);
+            s = (uint128_t)out.number[i + j] + (uint128_t)((uint128_t)x.number[j] * (uint128_t)y.number[i]) + (uint128_t)c;
 
-            s = out.number[i + j] + (x.number[j] * y.number[i]) + c;
-            out.number[i + j] = s;
+            if (s > hexaToULL("0xFFFFFFFFFFFFFFFF"))
+            {
+
+                c = s % 64;
+                s -= (c * 64);
+                printf("Dentro %llx %llx\n", c, (unsigned long long)s);
+            }
+            else
+            {
+                c = 0;
+            }
+
+            printf("i: %d j:%d s: %llx c: %llx\n", i, j, (unsigned long long)s, c);
+            out.number[i + j] = (unsigned long long)s;
         }
         out.number[i + j + 1] = c;
     }

@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
     struct BigInt x, y;
 
     //MAX VALUE 0xFFFFFFFFFFFFFFFF
-    x = enterN256("0x0", "0x0", "0x0", "0xFFFFFFFFFFFFFFFF", 0);
+    x = enterN256("0x0", "0xFFFFFFFFFFFFFFF", "0x0", "0xFFFFFFFFFFFFFFFF", 0);
     y = enterN256("0x0", "0x0", "0x0", "0x20", 0);
     printf("\n");
 
@@ -191,25 +191,39 @@ BigIntMul mulBigInt(BigInt x, BigInt y)
     uint128_t multi = 0;
     unsigned long long c = 0;
 
-    for (i = 0; i < 4; i++)
+   for (i = 0; i < 4; i++)
     {
         c = 0;
         for (j = 0; j < 4; j++)
         {
             multi = (uint128_t)x.number[j] * (uint128_t)y.number[i];
-            s = out.number[i + j] + multi + c;
 
-            if (s > hexaToULL(MAX_64))
+            printf("Multiplicacion: ");
+            print_u128_u(multi);
+            printf("\n");
+
+            printf("i: %d j:%d x: %llu j: %llu\n", i, j, x.number[j], y.number[i]);
+            s = out.number[i + j] + multi + c;
+            printf("S res: ");
+            print_u128_u(s);
+
+            if (s > hexaToULL("0xFFFFFFFFFFFFFFFF"))
             {
 
-                c = (s / hexaToULL(MAX_64) - 1);
-                s = c * hexaToULL(MAX_64) - 1;
+                c = (s / hexaToULL("0xFFFFFFFFFFFFFFFF") -1 );
+                s = c * hexaToULL("0xFFFFFFFFFFFFFFFF") -1;
+                printf("\nDentro S: ");
+                print_u128_u(s);
+                printf(" Dentro c: %llu \n", c);
             }
             else
             {
+                printf("\nmenor\n");
                 c = 0;
             }
+            print_u128_u(s);
             out.number[i + j] = (uint64_t)(s);
+            printf("\nOUT %llu\n",out.number[i + j] );
         }
         out.number[i + j + 1] = c;
     }
